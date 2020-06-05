@@ -30,20 +30,13 @@ values."
    dotspacemacs-configuration-layer-path '()
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(
+   '(rust
      ;; Programming languages
      octave
      groovy
      haskell
      emacs-lisp
      shell-scripts
-     (go :variables
-         go-backend 'lsp
-         go-tab-width 4
-         go-format-before-save t
-         gofmt-command "goimports")
-     (rust :variables
-           rust-format-on-save t)
      (python :variables
              python-sort-imports-on-save t
              python-enable-yapf-format-on-save t)
@@ -51,7 +44,8 @@ values."
             c-c++-backend 'lsp-ccls
             c-c++-adopt-subprojects t
             c-c++-lsp-enable-semantic-highlight t
-            c-c++-enable-clang-format-on-save t
+            c-c++-enable-clang-format-on-save nil
+            ;; clang-format-style "file"
             c-c++-default-mode-for-headers 'c++-mode)
      (cmake :variables cmake-enable-cmake-ide-support nil)
 
@@ -79,7 +73,10 @@ values."
           lsp-ui-doc-delay 0
           lsp-ui-sideline-enable nil
           lsp-ui-sideline-ignore-duplicate t
-          lsp-ui-sideline-show-code-actions t)
+          lsp-ui-sideline-show-code-actions t
+          lsp-ui-peek-enable t
+          lsp-ui-peek-fontify 'always
+          )
 
      ;; File types
      markdown
@@ -105,6 +102,7 @@ values."
      (ranger :variables
              ranger-show-preview t)
      (shell :variables
+            shell-default-shell 'ansi-term
             shell-default-height 30
             shell-default-position 'bottom)
      (spell-checking :variables
@@ -115,8 +113,7 @@ values."
    ;; wrapped in a layer. If you need some configuration for these
    ;; packages, then consider creating a layer. You can also put the
    ;; configuration in `dotspacemacs/user-config'.
-   dotspacemacs-additional-packages '(helm-ros
-                                      cmake-mode
+   dotspacemacs-additional-packages '(cmake-mode
                                       doom-themes
                                       format-all
                                       xclip
@@ -126,7 +123,8 @@ values."
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
    ;; A list of packages that will not be installed and loaded.
-   dotspacemacs-excluded-packages '()
+   dotspacemacs-excluded-packages '(
+                                    evil-escape)
    ;; Defines the behaviour of Spacemacs when installing packages.
    ;; Possible values are `used-only', `used-but-keep-unused' and `all'.
    ;; `used-only' installs only explicitly used packages and uninstall any
@@ -194,14 +192,14 @@ values."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(spacemacs-dark
-                         spacemacs-light)
+   dotspacemacs-themes '(solarized-dark
+                         solarized-light)
    ;; If non nil the cursor color matches the state color in GUI Emacs.
    dotspacemacs-colorize-cursor-according-to-state t
    ;; Default font, or prioritized list of fonts. `powerline-scale' allows to
    ;; quickly tweak the mode-line size to make separators look not too crappy.
    dotspacemacs-default-font '("Source Code Pro"
-                               :size 13
+                               :size 17
                                :weight normal
                                :width normal
                                :powerline-scale 1.3)
@@ -256,7 +254,7 @@ values."
    ;; auto-save the file in-place, `cache' to auto-save the file to another
    ;; file stored in the cache directory and `nil' to disable auto-saving.
    ;; (default 'cache)
-   dotspacemacs-auto-save-file-location 'cache
+   dotspacemacs-auto-save-file-location 'original
    ;; Maximum number of rollback slots to keep in the cache. (default 5)
    dotspacemacs-max-rollback-slots 5
    ;; If non nil, `helm' will try to minimize the space it uses. (default nil)
@@ -360,7 +358,24 @@ values."
    ;; delete only whitespace for changed lines or `nil' to disable cleanup.
    ;; (default nil)
    dotspacemacs-whitespace-cleanup 'trailing
+
+   ;; make backup files
+   make-backup-files nil
    ))
+
+(defun my-setup-indent (n)
+  ;; java/c/c++
+  (setq c-basic-offset n)
+  ;; web development
+  (setq coffee-tab-width n) ; coffeescript
+  (setq javascript-indent-level n) ; javascript-mode
+  (setq js-indent-level n) ; js-mode
+  (setq js2-basic-offset n) ; js2-mode, in latest js2-mode, it's alias of js-indent-level
+  (setq web-mode-markup-indent-offset n) ; web-mode, html tag in html file
+  (setq web-mode-css-indent-offset n) ; web-mode, css in html file
+  (setq web-mode-code-indent-offset n) ; web-mode, js code in html file
+  (setq css-indent-offset n) ; css-mode
+)
 
 (defun dotspacemacs/user-init ()
   "Initialization function for user code.
@@ -370,8 +385,11 @@ executes.
 before packages are loaded. If you are unsure, you should try in setting them in
 `dotspacemacs/user-config' first."
 
-  (setq shell-file-name "/bin/bash")
-  (setq-default dotspacemacs-themes '(doom-one)
+  (setq shell-file-name "/bin/zsh")
+  (setq term-char-mode-point-at-process-mark nil)
+  (setq-default dotspacemacs-themes '(doom-solarized-dark
+                                      doom-solarized-light
+                                      doom-one)
                 ;; Ignore any ROS environment variables since they might change depending
                 ;; on which catkin workspace is used. When a new catkin workspace is chosen
                 ;; call `spacemacs/update-ros-envs' to update theses envs accordingly
@@ -382,7 +400,18 @@ before packages are loaded. If you are unsure, you should try in setting them in
                                                           "ROS_PACKAGE_PATH"
                                                           "ROSLISP_PACKAGE_DIRECTORIES"
                                                           "PKG_CONFIG_PATH"
-                                                          "LD_LIBRARY_PATH")))
+                                                          "LD_LIBRARY_PATH"))
+
+  (setq configuration-layer-elpa-archives
+        '(("melpa-cn" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+          ("org-cn"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/org/")
+          ("gnu-cn"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")))
+
+
+  (my-setup-indent 4);
+  ;; (setq-default tab-width 4)
+  ;; (setq-default indent-tabs-mode nil)
+)
 
 (defun spacemacs/update-ros-envs ()
   "Update all environment variables in `spacemacs-ignored-environment-variables'
@@ -457,24 +486,6 @@ you should place your code here."
   ;; Only kill frame when using SPC+q+q
   (spacemacs/set-leader-keys "qq" 'spacemacs/frame-killer)
 
-  ;; ROS shortcut
-  (spacemacs/set-leader-keys "ye" 'spacemacs/update-ros-envs)
-  (spacemacs/declare-prefix "y" "ROS")
-  (spacemacs/set-leader-keys "yy" 'helm-ros)
-
-  (spacemacs/declare-prefix "yt" "ROS topics")
-  (spacemacs/set-leader-keys "ytt" 'helm-ros-topics)
-  (spacemacs/set-leader-keys "ytz" 'helm-ros-rostopic-hz)
-  (spacemacs/set-leader-keys "yti" 'helm-ros-rostopic-info)
-
-  (spacemacs/declare-prefix "yn" "ROS nodes")
-  (spacemacs/set-leader-keys "yni" 'helm-ros-rosnode-info)
-  (spacemacs/set-leader-keys "ynn" 'helm-ros-rosnode-list)
-  (spacemacs/set-leader-keys "ynd" 'helm-ros-kill-node)
-  (spacemacs/set-leader-keys "ynr" 'helm-ros-run-node)
-
-  (spacemacs/set-leader-keys "ym" 'helm-ros-set-master-uri)
-
   ;; Turn on xclip mode
   (xclip-mode t)
 
@@ -483,12 +494,22 @@ you should place your code here."
                                                 idle-buffer-switch
                                                 mode-enabled)))
 
-  ;; TODO: make the following repos emacs package which can be imported as additional package
-  ;; Personal roslaunch config
-  (load-file "~/.spacemacs.d/private/roslaunch-jump/roslaunch-jump.el")
-  (load-file "~/.spacemacs.d/private/company-roslaunch/company-roslaunch.el")
-  (load-file "~/.spacemacs.d/private/catkin-make/catkin-make.el")
-  (catkin-make-keybinding-setup)
+
+  (load-file "~/.spacemacs.d/private/auto-save/auto-save.el")
+  (require 'auto-save)
+  (auto-save-enable)
+  (setq auto-save-silent t)   ; quietly save
+  (setq auto-save-idle 0.3)   ; quietly save
+  (setq auto-save-delete-trailing-whitespace t)  ; automatically delete spaces at the end of the line when saving
+
+
+;;; custom predicates if you don't want auto save.
+;;; disable auto save mode when current filetype is an gpg file.
+  (setq auto-save-disable-predicates
+        '((lambda ()
+            (string-suffix-p
+             "gpg"
+             (file-name-extension (buffer-name)) t))))
 
   ;; Other settings
   (setq find-file-visit-truename t)
@@ -507,12 +528,21 @@ you should place your code here."
   ;; Use windows key as meta key to avoid conflicts with i3wm
   (setq x-super-keysym 'meta)
 
+  ;; dired
+  (require 'dired)
+  (define-key dired-mode-map "c" 'find-file)
+
   ;; Ranger keybindings
   (require 'ranger)
   (define-key ranger-mode-map (kbd "M-h") 'ranger-prev-tab)
   (define-key ranger-mode-map (kbd "M-l") 'ranger-next-tab)
   (define-key ranger-mode-map (kbd "M-n") 'ranger-new-tab)
+
   (spacemacs/set-leader-keys "ar" 'ranger)
+
+  (require 'lsp-ui)
+  (define-key lsp-ui-peek-mode-map (kbd "C-j") 'lsp-ui-peek--select-next)
+  (define-key lsp-ui-peek-mode-map (kbd "C-k") 'lsp-ui-peek--select-prev)
 
   ;; Semantic mode
   (semantic-mode t)
@@ -521,6 +551,7 @@ you should place your code here."
   (require 'org)
   (spacemacs/set-leader-keys-for-major-mode 'org-mode "=" 'editorconfig-format-buffer)
   (define-key org-mode-map (kbd "C-<tab>") 'org-table-previous-field)
+  (setq org-export-with-sub-superscripts 'nil)
 
   ;; Enable doom-modeline-icons in gui and disable them in terminal
   (defun enable-doom-modeline-icons()
