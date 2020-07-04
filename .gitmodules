@@ -25,3 +25,9 @@
 [submodule "ccls"]
 	path = ccls
 	url = https://github.com/MaskRay/ccls
+[submodule "private/auto-save"]
+	path = private/auto-save
+	url = https://github.com/manateelazycat/auto-save.git
+[submodule "private/awesome-tab"]
+	path = private/awesome-tab
+	url = git://https://github.com/manateelazycat/awesome-tab.git

@@ -377,6 +377,8 @@ values."
   (setq css-indent-offset n) ; css-mode
 )
 
+(setq helm-buffer-max-length 50)
+
 (defun dotspacemacs/user-init ()
   "Initialization function for user code.
 It is called immediately after `dotspacemacs/init', before layer configuration
@@ -440,7 +442,7 @@ you should place your code here."
   (spacemacs/set-leader-keys "ag" 'engine/search-google)
   (setq browse-url-browser-function 'browse-url-generic
         engine/browser-function 'browse-url-generic
-        browse-url-generic-program "firefox")
+        browse-url-generic-program "google-chrome")
 
   ;; Org-mode
   (setq org-agenda-files (list "~/org/work.org"
@@ -503,8 +505,20 @@ you should place your code here."
   (setq auto-save-delete-trailing-whitespace t)  ; automatically delete spaces at the end of the line when saving
 
 
-;;; custom predicates if you don't want auto save.
-;;; disable auto save mode when current filetype is an gpg file.
+  (load-file "~/.spacemacs.d/private/awesome-tab/awesome-tab.el")
+  (require 'awesome-tab)
+  (awesome-tab-mode t)
+  (setq awesome-tab-height 150)
+  (global-set-key (kbd "C-c s") 'awesome-tab-ace-jump)
+  (global-set-key (kbd "C-c l") 'awesome-tab-forward-tab)
+  (global-set-key (kbd "C-c h") 'awesome-tab-backward-tab)
+
+  (require 'all-the-icons)
+  (setq inhibit-compacting-font-caches t)
+  (setq neo-theme 'icons)
+
+  ;;; custom predicates if you don't want auto save.
+  ;;; disable auto save mode when current filetype is an gpg file.
   (setq auto-save-disable-predicates
         '((lambda ()
             (string-suffix-p
