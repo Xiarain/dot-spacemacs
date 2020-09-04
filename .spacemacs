@@ -38,8 +38,11 @@ values."
      emacs-lisp
      shell-scripts
      (python :variables
+             python-backend 'lsp
+             python-lsp-server 'pyls
              python-sort-imports-on-save t
              python-enable-yapf-format-on-save t)
+
      (c-c++ :variables
             c-c++-backend 'lsp-ccls
             c-c++-adopt-subprojects t
@@ -99,8 +102,8 @@ values."
      systemd
      version-control
      search-engine
-     (ranger :variables
-             ranger-show-preview t)
+     ;; (ranger :variables
+     ;;         ranger-show-preview t)
      (shell :variables
             shell-default-shell 'ansi-term
             shell-default-height 30
@@ -413,6 +416,8 @@ before packages are loaded. If you are unsure, you should try in setting them in
   (my-setup-indent 4);
   ;; (setq-default tab-width 4)
   ;; (setq-default indent-tabs-mode nil)
+
+  (setenv "WORKON_HOME" "~/anaconda3/envs")
 )
 
 (defun spacemacs/update-ros-envs ()
@@ -457,7 +462,7 @@ you should place your code here."
   (put 'cmake-ide-cmake-args 'safe-local-variable 'stringp)
 
   ;; Python interpreter
-  (setq python-shell-interpreter "/usr/bin/python3")
+  ;; (setq python-shell-interpreter "/usr/bin/python3")
 
   ;; Autocompletion configuration
   (use-package company
@@ -496,6 +501,45 @@ you should place your code here."
                                                 idle-buffer-switch
                                                 mode-enabled)))
 
+  (require 'magit)
+  ;; (defun magit-display-buffer-pop-up-frame (buffer)
+  ;;   (if (with-current-buffer buffer (eq major-mode 'magit-status-mode))
+  ;;       (display-buffer buffer
+  ;;                       '((display-buffer-reuse-window
+  ;;                          display-buffer-pop-up-frame)
+  ;;                         (reusable-frames . t)))
+  ;;     (magit-display-buffer-traditional buffer)))
+  ;; (setq magit-display-buffer-function #'magit-display-buffer-traditional)
+  (defun magit-diff-visit-file-other-window (&optional noselect)
+    "Visit current file in another window."
+    (interactive)
+    (let ((current-window (selected-window))
+          ;; magit-diff-visit-file visits in other-window with prefix arg
+          (current-prefix-arg t))
+      (call-interactively 'magit-diff-visit-file)
+      (when noselect
+        (select-window current-window))))
+
+  (defun magit-diff-visit-file-other-window-noselect ()
+    "Visit current file in another window, but don't select it."
+    (interactive)
+    (magit-diff-visit-file-other-window t))
+
+  (use-package magit
+    :ensure t
+    :init
+    ;; disable gravatars
+    (setq magit-revision-show-gravatars nil)
+
+    ;; hide recent commits in magit-status
+    (setq magit-log-section-commit-count 0)
+
+    :bind (("C-x m" . magit-status)
+           ("C-c b" . magit-blame)
+           :map magit-status-mode-map
+           ;; make C-o and o behave as in dired
+           ("o" . magit-diff-visit-file-other-window)
+           ("C-o" . magit-diff-visit-file-other-window-noselect)))
 
   (load-file "~/.spacemacs.d/private/auto-save/auto-save.el")
   (require 'auto-save)
@@ -508,10 +552,23 @@ you should place your code here."
   (load-file "~/.spacemacs.d/private/awesome-tab/awesome-tab.el")
   (require 'awesome-tab)
   (awesome-tab-mode t)
-  (setq awesome-tab-height 150)
-  (global-set-key (kbd "C-c s") 'awesome-tab-ace-jump)
-  (global-set-key (kbd "C-c l") 'awesome-tab-forward-tab)
-  (global-set-key (kbd "C-c h") 'awesome-tab-backward-tab)
+  (setq awesome-tab-height 130)
+
+  (spacemacs/set-leader-keys "atl" 'awesome-tab-forward-tab)
+  (spacemacs/set-leader-keys "ath" 'awesome-tab-backward-tab)
+  (spacemacs/set-leader-keys "atj" 'awesome-tab-ace-jump)
+  (spacemacs/set-leader-keys "ats" 'awesome-tab-switch-group)
+  (spacemacs/set-leader-keys "atf" 'awesome-tab-forward-group)
+  (spacemacs/set-leader-keys "atb" 'awesome-tab-backward-group)
+
+  ;; (load-file "~/.spacemacs.d/private/aweshell/eshell-up.el")
+  ;; (load-file "~/.spacemacs.d/private/aweshell/aweshell.el")
+  ;; (load-file "~/.spacemacs.d/private/aweshell/eshell-prompt-extras.el")
+  ;; (load-file "~/.spacemacs.d/private/aweshell/exec-path-from-shell.el")
+  ;; (load-file "~/.spacemacs.d/private/aweshell/eshell-did-you-mean.el")
+  ;; (require 'aweshell)
+  ;; (spacemacs/set-leader-keys "osn" 'aweshell-new)
+  ;; (spacemacs/set-leader-keys "osdcb" 'aweshell-dedicated-create-buffer)
 
   (require 'all-the-icons)
   (setq inhibit-compacting-font-caches t)
@@ -536,8 +593,8 @@ you should place your code here."
   (evil-define-key 'normal global-map (kbd "-") 'evil-previous-line-first-non-blank)
 
   ;; Zoom in / out
-  (define-key (current-global-map) (kbd "C-+") 'spacemacs/zoom-frm-in)
-  (define-key (current-global-map) (kbd "C--") 'spacemacs/zoom-frm-out)
+  ;; (define-key (current-global-map) (kbd "C-+") 'spacemacs/zoom-frm-in)
+  ;; (define-key (current-global-map) (kbd "C--") 'spacemacs/zoom-frm-out)
 
   ;; Use windows key as meta key to avoid conflicts with i3wm
   (setq x-super-keysym 'meta)
@@ -547,12 +604,11 @@ you should place your code here."
   (define-key dired-mode-map "c" 'find-file)
 
   ;; Ranger keybindings
-  (require 'ranger)
-  (define-key ranger-mode-map (kbd "M-h") 'ranger-prev-tab)
-  (define-key ranger-mode-map (kbd "M-l") 'ranger-next-tab)
-  (define-key ranger-mode-map (kbd "M-n") 'ranger-new-tab)
-
-  (spacemacs/set-leader-keys "ar" 'ranger)
+  ;; (require 'ranger)
+  ;; (define-key ranger-mode-map (kbd "M-h") 'ranger-prev-tab)
+  ;; (define-key ranger-mode-map (kbd "M-l") 'ranger-next-tab)
+  ;; (define-key ranger-mode-map (kbd "M-n") 'ranger-new-tab)
+  ;; (spacemacs/set-leader-keys "ar" 'ranger)
 
   (require 'lsp-ui)
   (define-key lsp-ui-peek-mode-map (kbd "C-j") 'lsp-ui-peek--select-next)
@@ -579,7 +635,7 @@ you should place your code here."
             #'enable-doom-modeline-icons-weird)
 
   ;; Enable format-all minor mode
-  (add-hook 'python-mode-hook #'yapf-mode)
+  ;; (add-hook 'python-mode-hook #'yapf-mode)
   (add-hook 'sh-mode-hook #'format-all-mode)
   (add-hook 'fish-mode-hook #'format-all-mode)
 
